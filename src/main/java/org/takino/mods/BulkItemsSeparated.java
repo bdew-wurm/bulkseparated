@@ -28,6 +28,7 @@ import java.util.logging.Logger;
 
 /**
  * BulkItemsSeparated is a mod that separates bulk stored items by QL. Only for BSBs.
+ * Blessed BSBs act WurmOnline way.
  */
 public class BulkItemsSeparated implements WurmServerMod, Configurable {
 
