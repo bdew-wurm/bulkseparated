@@ -1,0 +1,21 @@
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+
+
+repositories {
+    mavenCentral()
+    maven {
+        url "sftp://gotti.no-ip.org/srv/maven/snapshots"
+    }
+}
+
+dependencies {
+    compile fileTree(dir: '../libs', include: '*.jar')
+}
+
+
+jar {
+    baseName = 'bulkseparated'
+    version = 'ages'
+}
