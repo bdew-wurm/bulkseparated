@@ -166,7 +166,9 @@ public class BulkItemsSeparated implements WurmServerMod, Configurable {
             long bulkTemplateId = item.getRealTemplateId();
             if (bulkMaterial == material && bulkTemplateId == templateId && item.getAuxData() == aux) {
                 float bulkQuality = item.getQualityLevel();
-                if (bulkQuality < 90 && quality < 90) {
+                if (quality > 99.995f) {
+                    if (bulkQuality > 99.995f) return item;
+                } else if (bulkQuality < 90 && quality < 90) {
                     double upperBoundary = Math.round((bulkQuality + 5) / 10.0) * 10.0;
                     double lowerBoundary = Math.round((bulkQuality - 5) / 10.0) * 10.0;
                     if (quality <= upperBoundary && quality >= lowerBoundary) {
