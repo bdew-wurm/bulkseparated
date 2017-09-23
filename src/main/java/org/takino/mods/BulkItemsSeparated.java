@@ -60,10 +60,22 @@ public class BulkItemsSeparated implements WurmServerMod, Configurable {
                             ItemTemplate template = toInsert.getTemplate();
 
                             boolean full = target.isFull();
+
+                            byte auxToCheck = 0;
+                            if (toInsert.usesFoodState()) {
+                                if (toInsert.isFresh()) {
+                                    auxToCheck = (byte)(toInsert.getAuxData() & 0x7F);
+                                }
+                                else {
+                                    auxToCheck = toInsert.getAuxData();
+                                }
+                            }
+
                             Item toaddTo = getTargetToAdd(target,
                                     toInsert.getTemplateId(),
                                     toInsert.getMaterial(),
-                                    toInsert.getQualityLevel());
+                                    toInsert.getQualityLevel(),
+                                    auxToCheck);
 
                             float fe;
                             if (toaddTo != null) {
@@ -108,6 +120,7 @@ public class BulkItemsSeparated implements WurmServerMod, Configurable {
                                     toaddTo = ItemFactory.createItem(669,
                                             toInsert.getCurrentQualityLevel(), toInsert.getMaterial(), (byte) 0, (String) null);
                                     toaddTo.setRealTemplate(toInsert.getTemplateId());
+                                    toaddTo.setAuxData(auxToCheck);
                                     fe = (float) toInsert.getWeightGrams() / (float) template.getWeightGrams();
                                     if (!toaddTo.setWeight((int) (fe * (float) template.getVolume()), true)) {
                                         target.insertItem(toaddTo, true);
@@ -144,16 +157,18 @@ public class BulkItemsSeparated implements WurmServerMod, Configurable {
         }
     }
 
-    private Item getTargetToAdd(Item bulkInventory, long templateId, byte material, float quality) {
+    private Item getTargetToAdd(Item bulkInventory, long templateId, byte material, float quality, byte aux) {
         Iterator<Item> iterator = bulkInventory.getItems().iterator();
         Item item;
         while (iterator.hasNext()) {
             item = iterator.next();
             byte bulkMaterial = item.getMaterial();
             long bulkTemplateId = item.getRealTemplateId();
-            if (bulkMaterial == material && bulkTemplateId == templateId) {
+            if (bulkMaterial == material && bulkTemplateId == templateId && item.getAuxData() == aux) {
                 float bulkQuality = item.getQualityLevel();
-                if (bulkQuality < 90 && quality < 90) {
+                if (quality > 99.995f) {
+                    if (bulkQuality > 99.995f) return item;
+                } else if (bulkQuality < 90 && quality < 90) {
                     double upperBoundary = Math.round((bulkQuality + 5) / 10.0) * 10.0;
                     double lowerBoundary = Math.round((bulkQuality - 5) / 10.0) * 10.0;
                     if (quality <= upperBoundary && quality >= lowerBoundary) {
