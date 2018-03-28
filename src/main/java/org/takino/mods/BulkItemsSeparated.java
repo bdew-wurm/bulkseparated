@@ -39,7 +39,7 @@ public class BulkItemsSeparated implements WurmServerMod, PreInitable, Initable 
                         @Override
                         public void edit(MethodCall m) throws CannotCompileException {
                             if (m.getMethodName().equals("getItemsAsArray")) {
-                                m.replace("if ($0.getBless()!=null) $_ = $proceed($$); else $_ = org.takino.mods.BulkItemsHooks.getItemsAsArrayFiltered($0, source);");
+                                m.replace("if (($0.getBless()!=null) || $0.isCrate()) $_ = $proceed($$); else $_ = org.takino.mods.BulkItemsHooks.getItemsAsArrayFiltered($0, source);");
                             }
                         }
                     });
