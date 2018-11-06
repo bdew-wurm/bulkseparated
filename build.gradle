@@ -1,7 +1,6 @@
-version '1.0-SNAPSHOT'
+version 'bdew-1.0'
 
 apply plugin: 'java'
-
 
 repositories {
     mavenCentral()
@@ -9,11 +8,19 @@ repositories {
 }
 
 dependencies {
-    compile 'org.gotti.wurmunlimited:server-modlauncher:0.33-beta1'
+    compile 'org.gotti.wurmunlimited:server-modlauncher:0.40'
 }
 
-
 jar {
-    baseName = 'bulkseparated'
-    version = 'ages'
+    archiveName "${project.name}.jar"
+}
+
+task dist(type: Zip) {
+    into("mods", {
+        into(project.name, {
+            from jar
+        })
+        from fileTree(dir: 'mods', include: '*')
+    })
+    archiveName "${project.name}-${project.version}.zip"
 }
