@@ -7,7 +7,7 @@ import javassist.NotFoundException;
 import javassist.expr.ExprEditor;
 import javassist.expr.MethodCall;
 import org.gotti.wurmunlimited.modloader.classhooks.HookManager;
-import org.gotti.wurmunlimited.modloader.classhooks.InvocationHandlerFactory;
+import org.gotti.wurmunlimited.modloader.interfaces.Configurable;
 import org.gotti.wurmunlimited.modloader.interfaces.Initable;
 import org.gotti.wurmunlimited.modloader.interfaces.PreInitable;
 import org.gotti.wurmunlimited.modloader.interfaces.WurmServerMod;
@@ -16,16 +16,20 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * BulkItemsSeparated is a mod that separates bulk stored items by QL. Only for BSBs.
- * Blessed BSBs act WurmOnline way.
- */
-public class BulkItemsSeparated implements WurmServerMod, PreInitable, Initable {
-
-    private static Logger logger = Logger.getLogger("bulkItemsSeparated");
+public class BulkItemsSeparated implements WurmServerMod, PreInitable, Initable, Configurable {
+    private static Logger logger = Logger.getLogger("BulkItemsSeparated");
 
     static void logException(String msg, Throwable e) {
         logger.log(Level.SEVERE, msg, e);
+    }
+
+    public static boolean betterGrouping;
+    public static boolean fasterTransfer;
+
+    @Override
+    public void configure(Properties properties) {
+        betterGrouping = Boolean.parseBoolean(properties.getProperty("betterGrouping", "true"));
+        fasterTransfer = Boolean.parseBoolean(properties.getProperty("fasterTransfer", "true"));
     }
 
     @Override
@@ -46,7 +50,30 @@ public class BulkItemsSeparated implements WurmServerMod, PreInitable, Initable 
 
             CtClass ctItem = classPool.getCtClass("com.wurmonline.server.items.Item");
             ctItem.getMethod("AddBulkItem", "(Lcom/wurmonline/server/creatures/Creature;Lcom/wurmonline/server/items/Item;)Z")
-                    .insertBefore("if ($1.getBless()==null) return org.takino.mods.BulkItemsHooks.addBulkItem($1, $0, this);");
+                    .insertBefore("if ($2.getBless()==null) return org.takino.mods.BulkItemsHooks.addBulkItem($2, $1, this);");
+
+            if (betterGrouping) {
+                ctItem.getMethod("getName", "(Z)Ljava/lang/String;")
+                        .instrument(new ExprEditor() {
+                            @Override
+                            public void edit(MethodCall m) throws CannotCompileException {
+                                if (m.getMethodName().equals("getPlural")) m.replace("$_=$0.getName();");
+                            }
+                        });
+            }
+
+            if (fasterTransfer) {
+                ctItemBehaviour.getMethod("moveBulkItemAsAction", "(Lcom/wurmonline/server/behaviours/Action;Lcom/wurmonline/server/creatures/Creature;Lcom/wurmonline/server/items/Item;Lcom/wurmonline/server/items/Item;F)Z")
+                        .instrument(new ExprEditor() {
+                            @Override
+                            public void edit(MethodCall m) throws CannotCompileException {
+                                if (m.getMethodName().equals("justTickedSecond"))
+                                    m.replace("$_ = true;");
+                                else if (m.getMethodName().equals("setTimeLeft"))
+                                    m.replace("$proceed($1/20);");
+                            }
+                        });
+            }
 
         } catch (NotFoundException | CannotCompileException e) {
             throw new RuntimeException(e);
