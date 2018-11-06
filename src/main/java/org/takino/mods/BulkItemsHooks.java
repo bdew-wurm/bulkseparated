@@ -32,7 +32,7 @@ public class BulkItemsHooks {
         Item toaddTo = getTargetToAdd(target,
                 toInsert.getTemplateId(),
                 toInsert.getMaterial(),
-                toInsert.getQualityLevel(),
+                toInsert.getCurrentQualityLevel(),
                 auxToCheck);
 
         float fe;
@@ -100,7 +100,7 @@ public class BulkItemsHooks {
     }
 
     public static Item[] getItemsAsArrayFiltered(Item targetContainer, Item toMatch) {
-        Item res = getTargetToAdd(targetContainer, toMatch.getRealTemplateId(), toMatch.getMaterial(), toMatch.getQualityLevel(), toMatch.getAuxData());
+        Item res = getTargetToAdd(targetContainer, toMatch.getRealTemplateId(), toMatch.getMaterial(), toMatch.getCurrentQualityLevel(), toMatch.getAuxData());
         if (res == null)
             return new Item[0];
         else
