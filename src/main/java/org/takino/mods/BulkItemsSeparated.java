@@ -23,11 +23,13 @@ public class BulkItemsSeparated implements WurmServerMod, PreInitable, Initable,
 
     public static boolean betterGrouping;
     public static boolean fasterTransfer;
+    public static boolean unlimitedRemove;
 
     @Override
     public void configure(Properties properties) {
         betterGrouping = Boolean.parseBoolean(properties.getProperty("betterGrouping", "true"));
         fasterTransfer = Boolean.parseBoolean(properties.getProperty("fasterTransfer", "true"));
+        unlimitedRemove = Boolean.parseBoolean(properties.getProperty("unlimitedRemove", "true"));
     }
 
     @Override
@@ -71,6 +73,18 @@ public class BulkItemsSeparated implements WurmServerMod, PreInitable, Initable,
                                     m.replace("$_ = true;");
                                 else if (m.getMethodName().equals("setTimeLeft"))
                                     m.replace("$proceed($1/20);");
+                            }
+                        });
+            }
+
+            if (unlimitedRemove) {
+                classPool.getCtClass("com.wurmonline.server.questions.RemoveItemQuestion")
+                        .getMethod("answer", "(Ljava/util/Properties;)V")
+                        .instrument(new ExprEditor() {
+                            @Override
+                            public void edit(MethodCall m) throws CannotCompileException {
+                                if (m.getMethodName().equals("getNumItemsNotCoins"))
+                                    m.replace("$_=0;");
                             }
                         });
             }
