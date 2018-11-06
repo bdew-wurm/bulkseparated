@@ -7,16 +7,14 @@ import javassist.NotFoundException;
 import javassist.expr.ExprEditor;
 import javassist.expr.MethodCall;
 import org.gotti.wurmunlimited.modloader.classhooks.HookManager;
-import org.gotti.wurmunlimited.modloader.interfaces.Configurable;
-import org.gotti.wurmunlimited.modloader.interfaces.Initable;
-import org.gotti.wurmunlimited.modloader.interfaces.PreInitable;
-import org.gotti.wurmunlimited.modloader.interfaces.WurmServerMod;
+import org.gotti.wurmunlimited.modloader.interfaces.*;
+import org.gotti.wurmunlimited.modsupport.actions.ModActions;
 
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class BulkItemsSeparated implements WurmServerMod, PreInitable, Initable, Configurable {
+public class BulkItemsSeparated implements WurmServerMod, PreInitable, Initable, Configurable, ServerStartedListener {
     private static Logger logger = Logger.getLogger("BulkItemsSeparated");
 
     static void logException(String msg, Throwable e) {
@@ -35,6 +33,8 @@ public class BulkItemsSeparated implements WurmServerMod, PreInitable, Initable,
     @Override
     public void preInit() {
         try {
+            ModActions.init();
+
             ClassPool classPool = HookManager.getInstance().getClassPool();
 
             CtClass ctItemBehaviour = classPool.getCtClass("com.wurmonline.server.behaviours.ItemBehaviour");
@@ -82,6 +82,11 @@ public class BulkItemsSeparated implements WurmServerMod, PreInitable, Initable,
 
     @Override
     public void init() {
+    }
+
+    @Override
+    public void onServerStarted() {
+        ModActions.registerAction(new BlessToggleAction());
     }
 }
 
