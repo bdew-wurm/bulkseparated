@@ -1,9 +1,9 @@
 package org.takino.mods;
 
-import com.wurmonline.server.creatures.Creature;
-import com.wurmonline.server.items.Item;
-import javassist.*;
-import javassist.bytecode.Descriptor;
+import javassist.CannotCompileException;
+import javassist.ClassPool;
+import javassist.CtClass;
+import javassist.NotFoundException;
 import javassist.expr.ExprEditor;
 import javassist.expr.MethodCall;
 import org.gotti.wurmunlimited.modloader.classhooks.HookManager;
@@ -12,8 +12,7 @@ import org.gotti.wurmunlimited.modloader.interfaces.Initable;
 import org.gotti.wurmunlimited.modloader.interfaces.PreInitable;
 import org.gotti.wurmunlimited.modloader.interfaces.WurmServerMod;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -33,6 +32,7 @@ public class BulkItemsSeparated implements WurmServerMod, PreInitable, Initable 
     public void preInit() {
         try {
             ClassPool classPool = HookManager.getInstance().getClassPool();
+
             CtClass ctItemBehaviour = classPool.getCtClass("com.wurmonline.server.behaviours.ItemBehaviour");
             ctItemBehaviour.getMethod("moveBulkItemAsAction", "(Lcom/wurmonline/server/behaviours/Action;Lcom/wurmonline/server/creatures/Creature;Lcom/wurmonline/server/items/Item;Lcom/wurmonline/server/items/Item;F)Z")
                     .instrument(new ExprEditor() {
@@ -44,42 +44,17 @@ public class BulkItemsSeparated implements WurmServerMod, PreInitable, Initable 
                         }
                     });
 
-        } catch (NotFoundException | CannotCompileException e) {
-            logException("Error hooking moveBulkItemAsAction", e);
-        }
+            CtClass ctItem = classPool.getCtClass("com.wurmonline.server.items.Item");
+            ctItem.getMethod("AddBulkItem", "(Lcom/wurmonline/server/creatures/Creature;Lcom/wurmonline/server/items/Item;)Z")
+                    .insertBefore("if ($1.getBless()==null) return org.takino.mods.BulkItemsHooks.addBulkItem($1, $0, this);");
 
+        } catch (NotFoundException | CannotCompileException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public void init() {
-        try {
-            CtClass returnType = CtPrimitiveType.booleanType;
-            CtClass[] inputTypes = {
-                    HookManager.getInstance().getClassPool().get("com.wurmonline.server.creatures.Creature"),
-                    HookManager.getInstance().getClassPool().get("com.wurmonline.server.items.Item")
-            };
-
-            HookManager.getInstance().registerHook("com.wurmonline.server.items.Item", "AddBulkItem", Descriptor.ofMethod(returnType, inputTypes), new InvocationHandlerFactory() {
-                @Override
-                public InvocationHandler createInvocationHandler() {
-                    return new InvocationHandler() {
-                        @Override
-                        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                            Item target = (Item) args[1];
-                            Creature mover = (Creature) args[0];
-                            Item toInsert = (Item) proxy;
-                            if (target.getBless() != null) {
-                                return method.invoke(proxy, args);
-                            } else {
-                                return BulkItemsHooks.addBulkItem(target, mover, toInsert);
-                            }
-                        }
-                    };
-                }
-            });
-        } catch (Exception e) {
-            logException("Error in init", e);
-        }
     }
 }
 
