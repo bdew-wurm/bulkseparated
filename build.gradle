@@ -1,4 +1,4 @@
-version 'bdew-1.0'
+version 'bdew-1.1'
 
 apply plugin: 'java'
 

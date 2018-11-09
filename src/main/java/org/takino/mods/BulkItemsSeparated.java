@@ -85,6 +85,10 @@ public class BulkItemsSeparated implements WurmServerMod, PreInitable, Initable,
                             public void edit(MethodCall m) throws CannotCompileException {
                                 if (m.getMethodName().equals("getNumItemsNotCoins"))
                                     m.replace("$_=0;");
+                                else if (m.getMethodName().equals("getCarryCapacityFor"))
+                                    m.replace("if (targetInventory == null || targetInventory.getOwnerId() != -10L) $_=$proceed($$); else $_=100;");
+                                else if (m.getMethodName().equals("canCarry"))
+                                    m.replace("if (targetInventory == null || targetInventory.getOwnerId() != -10L) $_=$proceed($$); else $_=true;");
                             }
                         });
             }
