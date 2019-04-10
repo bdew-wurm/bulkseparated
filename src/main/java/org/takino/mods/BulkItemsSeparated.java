@@ -51,6 +51,9 @@ public class BulkItemsSeparated implements WurmServerMod, PreInitable, Initable,
                     });
 
             CtClass ctItem = classPool.getCtClass("com.wurmonline.server.items.Item");
+            //sorting status
+            ctItem.getMethod("getName","()Ljava/lang/String;").insertBefore("if($0.isBulkContainer()) return org.takino.mods.BulkItemsHooks.renameSorted($0);");
+
             ctItem.getMethod("AddBulkItem", "(Lcom/wurmonline/server/creatures/Creature;Lcom/wurmonline/server/items/Item;)Z")
                     .insertBefore("if ($2.getBless()==null) return org.takino.mods.BulkItemsHooks.addBulkItem($2, $1, this);");
 

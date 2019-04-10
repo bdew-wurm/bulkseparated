@@ -1,12 +1,16 @@
 package org.takino.mods;
 
+import com.wurmonline.math.TilePos;
 import com.wurmonline.server.DbConnector;
+import com.wurmonline.server.NoSuchItemException;
 import com.wurmonline.server.behaviours.Action;
 import com.wurmonline.server.behaviours.ActionEntry;
 import com.wurmonline.server.behaviours.Methods;
 import com.wurmonline.server.creatures.Creature;
 import com.wurmonline.server.items.Item;
 import com.wurmonline.server.utils.DbUtilities;
+import com.wurmonline.server.zones.VolaTile;
+import com.wurmonline.server.zones.Zones;
 import org.gotti.wurmunlimited.modloader.ReflectionUtil;
 import org.gotti.wurmunlimited.modsupport.actions.ActionPerformer;
 import org.gotti.wurmunlimited.modsupport.actions.BehaviourProvider;
@@ -107,7 +111,15 @@ public class BlessToggleAction implements ModAction, ActionPerformer, BehaviourP
             target.bless(performer.getDeity() != null ? performer.getDeity().getNumber() : 1);
             performer.getCommunicator().sendNormalServerMessage(String.format("The %s will no longer sort by QL.", target.getName()));
         }
-
+        try {
+            target.getParent();
+            target.sendUpdate();
+        }
+        catch (NoSuchItemException e) {
+            VolaTile itemTile = Zones.getOrCreateTile(target.getTilePos(), target.isOnSurface());
+            itemTile.makeInvisible(target);
+            itemTile.makeVisible(target);
+        }
         return propagate(action, FINISH_ACTION, NO_SERVER_PROPAGATION, NO_ACTION_PERFORMER_PROPAGATION);
     }
 }

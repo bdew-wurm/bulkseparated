@@ -135,4 +135,8 @@ public class BulkItemsHooks {
         }
         return null;
     }
+
+    public static String renameSorted(Item container){
+        return container.getName(true) + (container.getBless() == null ? " (sorted)" : " (unsorted)");
+    }
 }
