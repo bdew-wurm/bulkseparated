@@ -35,6 +35,12 @@ public class BlessToggleAction implements ModAction, ActionPerformer, BehaviourP
                 48 /* ACTION_TYPE_ENEMY_ALWAYS */,
                 37 /* ACTION_TYPE_NEVER_USE_ACTIVE_ITEM */
         });
+        //fix for short action range
+        try {
+            ReflectionUtil.setPrivateField(actionEntry, ReflectionUtil.getField(ActionEntry.class, "maxRange"), 4);
+        } catch (Exception e) {
+            BulkItemsSeparated.logException("Failed to increase toggle sorting range", e);
+        }
         ModActions.registerAction(actionEntry);
     }
 
