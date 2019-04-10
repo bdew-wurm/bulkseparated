@@ -1,9 +1,11 @@
 package org.takino.mods;
 
+import com.wurmonline.server.items.Item;
 import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.NotFoundException;
+import javassist.bytecode.Descriptor;
 import javassist.expr.ExprEditor;
 import javassist.expr.MethodCall;
 import org.gotti.wurmunlimited.modloader.classhooks.HookManager;
@@ -45,7 +47,7 @@ public class BulkItemsSeparated implements WurmServerMod, PreInitable, Initable,
                         @Override
                         public void edit(MethodCall m) throws CannotCompileException {
                             if (m.getMethodName().equals("getItemsAsArray")) {
-                                m.replace("if (($0.getBless()!=null) || $0.isCrate()) $_ = $proceed($$); else $_ = org.takino.mods.BulkItemsHooks.getItemsAsArrayFiltered($0, source);");
+                                m.replace("if (($0.getBless()!=null)) $_ = $proceed($$); else $_ = org.takino.mods.BulkItemsHooks.getItemsAsArrayFiltered($0, source);");
                             }
                         }
                     });
@@ -56,6 +58,9 @@ public class BulkItemsSeparated implements WurmServerMod, PreInitable, Initable,
 
             ctItem.getMethod("AddBulkItem", "(Lcom/wurmonline/server/creatures/Creature;Lcom/wurmonline/server/items/Item;)Z")
                     .insertBefore("if ($2.getBless()==null) return org.takino.mods.BulkItemsHooks.addBulkItem($2, $1, this);");
+            //crate fix
+            ctItem.getMethod("AddBulkItemToCrate", "(Lcom/wurmonline/server/creatures/Creature;Lcom/wurmonline/server/items/Item;)Z")
+                    .insertBefore("if ($2.getBless()==null) return org.takino.mods.BulkItemsHooks.addBulkItemToCrate($2, $1, this);");
 
             if (betterGrouping) {
                 ctItem.getMethod("getName", "(Z)Ljava/lang/String;")

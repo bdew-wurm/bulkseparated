@@ -56,7 +56,7 @@ public class BlessToggleAction implements ModAction, ActionPerformer, BehaviourP
     public boolean canUse(Creature performer, Item target) {
         return performer.isPlayer() && target != null
                 && target.isBulkContainer()
-                && !target.isCrate();
+                /*&& !target.isCrate()*/;
     }
 
     @Override
