@@ -7,11 +7,10 @@ import com.wurmonline.server.behaviours.Methods;
 import com.wurmonline.server.creatures.Creature;
 import com.wurmonline.server.items.Item;
 import com.wurmonline.server.utils.DbUtilities;
+import com.wurmonline.server.zones.VolaTile;
+import com.wurmonline.server.zones.Zones;
 import org.gotti.wurmunlimited.modloader.ReflectionUtil;
-import org.gotti.wurmunlimited.modsupport.actions.ActionPerformer;
-import org.gotti.wurmunlimited.modsupport.actions.BehaviourProvider;
-import org.gotti.wurmunlimited.modsupport.actions.ModAction;
-import org.gotti.wurmunlimited.modsupport.actions.ModActions;
+import org.gotti.wurmunlimited.modsupport.actions.*;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -19,18 +18,16 @@ import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 
-import static org.gotti.wurmunlimited.modsupport.actions.ActionPropagation.FINISH_ACTION;
-import static org.gotti.wurmunlimited.modsupport.actions.ActionPropagation.NO_ACTION_PERFORMER_PROPAGATION;
-import static org.gotti.wurmunlimited.modsupport.actions.ActionPropagation.NO_SERVER_PROPAGATION;
+import static org.gotti.wurmunlimited.modsupport.actions.ActionPropagation.*;
 
 public class BlessToggleAction implements ModAction, ActionPerformer, BehaviourProvider {
     private ActionEntry actionEntry;
 
     public BlessToggleAction() {
-        actionEntry = ActionEntry.createEntry((short) ModActions.getNextActionId(), "Toggle sorting", "toggling", new int[]{
+        actionEntry = new ActionEntryBuilder((short) ModActions.getNextActionId(), "Toggle sorting", "toggling", new int[]{
                 48 /* ACTION_TYPE_ENEMY_ALWAYS */,
                 37 /* ACTION_TYPE_NEVER_USE_ACTIVE_ITEM */
-        });
+        }).range(4).build();
         ModActions.registerAction(actionEntry);
     }
 
@@ -50,9 +47,7 @@ public class BlessToggleAction implements ModAction, ActionPerformer, BehaviourP
     }
 
     public boolean canUse(Creature performer, Item target) {
-        return performer.isPlayer() && target != null
-                && target.isBulkContainer()
-                && !target.isCrate();
+        return performer.isPlayer() && target != null && target.isBulkContainer();
     }
 
     @Override
@@ -107,7 +102,13 @@ public class BlessToggleAction implements ModAction, ActionPerformer, BehaviourP
             target.bless(performer.getDeity() != null ? performer.getDeity().getNumber() : 1);
             performer.getCommunicator().sendNormalServerMessage(String.format("The %s will no longer sort by QL.", target.getName()));
         }
-
+        if (target.getParentId() == -10L) {
+            VolaTile itemTile = Zones.getOrCreateTile(target.getTilePos(), target.isOnSurface());
+            itemTile.makeInvisible(target);
+            itemTile.makeVisible(target);
+        } else {
+            target.sendUpdate();
+        }
         return propagate(action, FINISH_ACTION, NO_SERVER_PROPAGATION, NO_ACTION_PERFORMER_PROPAGATION);
     }
 }
