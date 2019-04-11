@@ -2,7 +2,6 @@ package org.takino.mods;
 
 import com.wurmonline.server.FailedException;
 import com.wurmonline.server.Items;
-import com.wurmonline.server.behaviours.Action;
 import com.wurmonline.server.behaviours.MethodsItems;
 import com.wurmonline.server.creatures.Creature;
 import com.wurmonline.server.items.*;
@@ -20,7 +19,7 @@ public class BulkItemsHooks {
             if (!toInsert.isFresh() && !toInsert.isLive()) {
                 auxToCheck = toInsert.getAuxData();
             } else {
-                auxToCheck = (byte)(toInsert.getAuxData() & 127);
+                auxToCheck = (byte) (toInsert.getAuxData() & 127);
             }
         }
 
@@ -32,7 +31,7 @@ public class BulkItemsHooks {
 
         float fe;
         if (toaddTo != null) {
-            if (MethodsItems.checkIfStealing(toaddTo, mover, (Action) null)) {
+            if (MethodsItems.checkIfStealing(toaddTo, mover, null)) {
                 int fe1 = (int) toaddTo.getPosX() >> 2;
                 int percent = (int) toaddTo.getPosY() >> 2;
                 Village percentAdded = Zones.getVillage(fe1, percent, mover.isOnSurface());
@@ -74,7 +73,7 @@ public class BulkItemsHooks {
         } else {
             try {
                 toaddTo = ItemFactory.createItem(669,
-                        toInsert.getCurrentQualityLevel(), toInsert.getMaterial(), (byte) 0, (String) null);
+                        toInsert.getCurrentQualityLevel(), toInsert.getMaterial(), (byte) 0, null);
                 toaddTo.setRealTemplate(toInsert.getTemplateId());
                 if (toInsert.usesFoodState()) {
                     toaddTo.setAuxData(auxToCheck);
@@ -90,7 +89,7 @@ public class BulkItemsHooks {
                 }
                 fe = 1.0F;
                 if (!toInsert.isFish() || toInsert.getTemplateId() == 369) {
-                    fe=(float) toInsert.getWeightGrams() / (float) template.getWeightGrams();
+                    fe = (float) toInsert.getWeightGrams() / (float) template.getWeightGrams();
                 }
                 if (!toaddTo.setWeight((int) (fe * (float) template.getVolume()), true)) {
                     target.insertItem(toaddTo, true);
@@ -121,7 +120,7 @@ public class BulkItemsHooks {
                 if (!toInsert.isFresh() && !toInsert.isLive()) {
                     auxToCheck = toInsert.getAuxData();
                 } else {
-                    auxToCheck = (byte)(toInsert.getAuxData() & 127);
+                    auxToCheck = (byte) (toInsert.getAuxData() & 127);
                 }
             }
 
@@ -134,9 +133,9 @@ public class BulkItemsHooks {
             int remove;
             float percent;
             if (toaddTo != null) {
-                if (MethodsItems.checkIfStealing(toaddTo, mover, (Action)null)) {
-                    int tilex = (int)toaddTo.getPosX() >> 2;
-                    int tiley = (int)toaddTo.getPosY() >> 2;
+                if (MethodsItems.checkIfStealing(toaddTo, mover, null)) {
+                    int tilex = (int) toaddTo.getPosX() >> 2;
+                    int tiley = (int) toaddTo.getPosY() >> 2;
                     Village vil = Zones.getVillage(tilex, tiley, mover.isOnSurface());
                     if (mover.isLegal() && vil != null) {
                         mover.getCommunicator().sendNormalServerMessage("That would be illegal here. You can check the settlement token for the local laws.");
@@ -151,12 +150,12 @@ public class BulkItemsHooks {
 
                 percent = 1.0F;
                 if (!toInsert.isFish() || toInsert.getTemplateId() == 369) {
-                    percent = (float)toInsert.getWeightGrams() / (float)template.getWeightGrams();
+                    percent = (float) toInsert.getWeightGrams() / (float) template.getWeightGrams();
                 }
 
                 destroyOriginal = true;
-                if (percent > (float)remainingSpaces) {
-                    percent = Math.min((float)remainingSpaces, percent);
+                if (percent > (float) remainingSpaces) {
+                    percent = Math.min((float) remainingSpaces, percent);
                     destroyOriginal = false;
                 }
 
@@ -164,8 +163,8 @@ public class BulkItemsHooks {
                 Item tempItem = null;
                 if (!destroyOriginal) {
                     try {
-                        int newWeight = (int)((float)remove * percent);
-                        tempItem = ItemFactory.createItem(template.getTemplateId(), toInsert.getCurrentQualityLevel(), toInsert.getMaterial(), (byte)0, (String)null);
+                        int newWeight = (int) ((float) remove * percent);
+                        tempItem = ItemFactory.createItem(template.getTemplateId(), toInsert.getCurrentQualityLevel(), toInsert.getMaterial(), (byte) 0, null);
                         tempItem.setWeight(newWeight, true);
                         if (toInsert.usesFoodState()) {
                             tempItem.setAuxData(auxToCheck);
@@ -194,7 +193,7 @@ public class BulkItemsHooks {
                     toaddTo.setQualityLevel(Math.max(1.0F, newQl));
                 }
 
-                toaddTo.setWeight(toaddTo.getWeightGrams() + (int)(percent * (float)template.getVolume()), true);
+                toaddTo.setWeight(toaddTo.getWeightGrams() + (int) (percent * (float) template.getVolume()), true);
                 if (destroyOriginal) {
                     Items.destroyItem(toInsert.getWurmId());
                 } else {
@@ -206,7 +205,7 @@ public class BulkItemsHooks {
                 return true;
             } else {
                 try {
-                    toaddTo = ItemFactory.createItem(669, toInsert.getCurrentQualityLevel(), toInsert.getMaterial(), (byte)0, (String)null);
+                    toaddTo = ItemFactory.createItem(669, toInsert.getCurrentQualityLevel(), toInsert.getMaterial(), (byte) 0, null);
                     toaddTo.setRealTemplate(toInsert.getTemplateId());
                     if (toInsert.usesFoodState()) {
                         toaddTo.setAuxData(auxToCheck);
@@ -223,23 +222,23 @@ public class BulkItemsHooks {
 
                     percent = 1.0F;
                     if (!toInsert.isFish() || toInsert.getTemplateId() == 369) {
-                        percent = (float)toInsert.getWeightGrams() / (float)template.getWeightGrams();
+                        percent = (float) toInsert.getWeightGrams() / (float) template.getWeightGrams();
                     }
 
                     destroyOriginal = true;
-                    if (percent > (float)remainingSpaces) {
-                        percent = Math.min((float)remainingSpaces, percent);
+                    if (percent > (float) remainingSpaces) {
+                        percent = Math.min((float) remainingSpaces, percent);
                         destroyOriginal = false;
                     }
 
-                    if (!toaddTo.setWeight((int)(percent * (float)template.getVolume()), true)) {
+                    if (!toaddTo.setWeight((int) (percent * (float) template.getVolume()), true)) {
                         target.insertItem(toaddTo, true);
                     }
 
                     if (destroyOriginal) {
                         Items.destroyItem(toInsert.getWurmId());
                     } else {
-                        remove = (int)((float)template.getWeightGrams() * percent);
+                        remove = (int) ((float) template.getWeightGrams() * percent);
                         toInsert.setWeight(toInsert.getWeightGrams() - remove, true);
                     }
 
@@ -292,7 +291,7 @@ public class BulkItemsHooks {
         return null;
     }
 
-    public static String renameSorted(Item container){
+    public static String renameSorted(Item container) {
         return container.getName(true) + (container.getBless() == null ? " (sorted)" : " (unsorted)");
     }
 }
