@@ -1,4 +1,4 @@
-version 'bdew-1.1'
+version 'bdew-1.2'
 
 apply plugin: 'java'
 
@@ -8,7 +8,7 @@ repositories {
 }
 
 dependencies {
-    compile 'org.gotti.wurmunlimited:server-modlauncher:0.40'
+    compile 'org.gotti.wurmunlimited:server-modlauncher:0.43'
 }
 
 jar {
