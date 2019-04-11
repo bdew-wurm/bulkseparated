@@ -47,7 +47,7 @@ public class BlessToggleAction implements ModAction, ActionPerformer, BehaviourP
     }
 
     public boolean canUse(Creature performer, Item target) {
-        return performer.isPlayer() && target != null && target.isBulkContainer();
+        return performer.isPlayer() && target != null && BulkItemsHooks.isSortable(target);
     }
 
     @Override
@@ -97,10 +97,10 @@ public class BlessToggleAction implements ModAction, ActionPerformer, BehaviourP
         }
         if (target.getBless() != null) {
             unBless(target);
-            performer.getCommunicator().sendNormalServerMessage(String.format("The %s will now sort by QL.", target.getName()));
+            performer.getCommunicator().sendNormalServerMessage(String.format("The %s will now sort by QL.", target.getTemplate().getName()));
         } else {
             target.bless(performer.getDeity() != null ? performer.getDeity().getNumber() : 1);
-            performer.getCommunicator().sendNormalServerMessage(String.format("The %s will no longer sort by QL.", target.getName()));
+            performer.getCommunicator().sendNormalServerMessage(String.format("The %s will no longer sort by QL.", target.getTemplate().getName()));
         }
         if (target.getParentId() == -10L) {
             VolaTile itemTile = Zones.getOrCreateTile(target.getTilePos(), target.isOnSurface());

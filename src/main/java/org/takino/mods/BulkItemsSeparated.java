@@ -24,12 +24,18 @@ public class BulkItemsSeparated implements WurmServerMod, PreInitable, Initable,
     public static boolean betterGrouping;
     public static boolean fasterTransfer;
     public static boolean unlimitedRemove;
+    public static boolean allowCrateSorting;
+    public static boolean allowNonCrateSorting;
+    public static boolean showSortingStatus;
 
     @Override
     public void configure(Properties properties) {
+        allowCrateSorting = Boolean.parseBoolean(properties.getProperty("allowCrateSorting", "true"));
+        allowNonCrateSorting = Boolean.parseBoolean(properties.getProperty("allowNonCrateSorting", "true"));
         betterGrouping = Boolean.parseBoolean(properties.getProperty("betterGrouping", "true"));
         fasterTransfer = Boolean.parseBoolean(properties.getProperty("fasterTransfer", "true"));
         unlimitedRemove = Boolean.parseBoolean(properties.getProperty("unlimitedRemove", "true"));
+        showSortingStatus = Boolean.parseBoolean(properties.getProperty("showSortingStatus", "true"));
     }
 
     @Override
@@ -39,36 +45,62 @@ public class BulkItemsSeparated implements WurmServerMod, PreInitable, Initable,
 
             ClassPool classPool = HookManager.getInstance().getClassPool();
 
-            CtClass ctItemBehaviour = classPool.getCtClass("com.wurmonline.server.behaviours.ItemBehaviour");
-            ctItemBehaviour.getMethod("moveBulkItemAsAction", "(Lcom/wurmonline/server/behaviours/Action;Lcom/wurmonline/server/creatures/Creature;Lcom/wurmonline/server/items/Item;Lcom/wurmonline/server/items/Item;F)Z")
-                    .instrument(new ExprEditor() {
-                        @Override
-                        public void edit(MethodCall m) throws CannotCompileException {
-                            if (m.getMethodName().equals("getItemsAsArray")) {
-                                m.replace("if (($0.getBless()!=null)) $_ = $proceed($$); else $_ = org.takino.mods.BulkItemsHooks.getItemsAsArrayFiltered($0, source);");
-                            }
-                        }
-                    });
-
             CtClass ctItem = classPool.getCtClass("com.wurmonline.server.items.Item");
+            CtClass ctItemBehaviour = classPool.getCtClass("com.wurmonline.server.behaviours.ItemBehaviour");
 
-            //sorting status
-            ctItem.getMethod("getName", "()Ljava/lang/String;").insertBefore("if($0.isBulkContainer()) return org.takino.mods.BulkItemsHooks.renameSorted($0);");
+            if (allowCrateSorting || allowNonCrateSorting) {
+                ctItemBehaviour.getMethod("moveBulkItemAsAction", "(Lcom/wurmonline/server/behaviours/Action;Lcom/wurmonline/server/creatures/Creature;Lcom/wurmonline/server/items/Item;Lcom/wurmonline/server/items/Item;F)Z")
+                        .instrument(new ExprEditor() {
+                            @Override
+                            public void edit(MethodCall m) throws CannotCompileException {
+                                if (m.getMethodName().equals("getItemsAsArray")) {
+                                    m.replace("if (org.takino.mods.BulkItemsHooks.isSorted($0)) " +
+                                            "$_ = org.takino.mods.BulkItemsHooks.getItemsAsArrayFiltered($0, source);" +
+                                            "else $_ = $proceed($$);");
+                                    logger.info(String.format("Patched getItemsAsArray in %s.%s at %d", m.where().getDeclaringClass().getName(), m.where().getName(), m.getLineNumber()));
+                                }
+                            }
+                        });
 
-            // add to bsb
-            ctItem.getMethod("AddBulkItem", "(Lcom/wurmonline/server/creatures/Creature;Lcom/wurmonline/server/items/Item;)Z")
-                    .insertBefore("if ($2.getBless()==null) return org.takino.mods.BulkItemsHooks.addBulkItem($2, $1, this);");
+                if (showSortingStatus) {
+                    ctItem.getMethod("getName", "(Z)Ljava/lang/String;")
+                            .insertAfter("if(org.takino.mods.BulkItemsHooks.isSortable(this)) " +
+                                    "$_ = $_ + (this.getBless() == null ? \" (sorted)\" : \" (unsorted)\");");
+                }
 
-            // add to crate
-            ctItem.getMethod("AddBulkItemToCrate", "(Lcom/wurmonline/server/creatures/Creature;Lcom/wurmonline/server/items/Item;)Z")
-                    .insertBefore("if ($2.getBless()==null) return org.takino.mods.BulkItemsHooks.addBulkItemToCrate($2, $1, this);");
+                ExprEditor bulkInsertEditor = new ExprEditor() {
+                    @Override
+                    public void edit(MethodCall m) throws CannotCompileException {
+                        if (m.getMethodName().equals("getItemWithTemplateAndMaterial")) {
+                            m.replace("if (org.takino.mods.BulkItemsHooks.isSorted(target))" +
+                                    "$_=org.takino.mods.BulkItemsHooks.getTargetToAdd(target,$1,$2,getCurrentQualityLevel(),$3,$4);" +
+                                    "else $_=$proceed($$);");
+                            logger.info(String.format("Patched getItemWithTemplateAndMaterial in %s.%s at %d", m.where().getDeclaringClass().getName(), m.where().getName(), m.getLineNumber()));
+                        }
+                    }
+                };
+
+                if (allowNonCrateSorting) {
+                    ctItem.getMethod("AddBulkItem", "(Lcom/wurmonline/server/creatures/Creature;Lcom/wurmonline/server/items/Item;)Z")
+                            .instrument(bulkInsertEditor);
+                }
+
+                if (allowCrateSorting) {
+                    ctItem.getMethod("AddBulkItemToCrate", "(Lcom/wurmonline/server/creatures/Creature;Lcom/wurmonline/server/items/Item;)Z")
+                            .instrument(bulkInsertEditor);
+                }
+
+            }
 
             if (betterGrouping) {
                 ctItem.getMethod("getName", "(Z)Ljava/lang/String;")
                         .instrument(new ExprEditor() {
                             @Override
                             public void edit(MethodCall m) throws CannotCompileException {
-                                if (m.getMethodName().equals("getPlural")) m.replace("$_=$0.getName();");
+                                if (m.getMethodName().equals("getPlural")) {
+                                    m.replace("$_=$0.getName();");
+                                    logger.info(String.format("Patched getPlural in %s.%s at %d", m.where().getDeclaringClass().getName(), m.where().getName(), m.getLineNumber()));
+                                }
                             }
                         });
             }
@@ -78,10 +110,13 @@ public class BulkItemsSeparated implements WurmServerMod, PreInitable, Initable,
                         .instrument(new ExprEditor() {
                             @Override
                             public void edit(MethodCall m) throws CannotCompileException {
-                                if (m.getMethodName().equals("justTickedSecond"))
+                                if (m.getMethodName().equals("justTickedSecond")) {
                                     m.replace("$_ = true;");
-                                else if (m.getMethodName().equals("setTimeLeft"))
+                                    logger.info(String.format("Patched justTickedSecond in %s.%s at %d", m.where().getDeclaringClass().getName(), m.where().getName(), m.getLineNumber()));
+                                } else if (m.getMethodName().equals("setTimeLeft")) {
                                     m.replace("$proceed($1/20);");
+                                    logger.info(String.format("Patched setTimeLeft in %s.%s at %d", m.where().getDeclaringClass().getName(), m.where().getName(), m.getLineNumber()));
+                                }
                             }
                         });
             }
@@ -92,12 +127,16 @@ public class BulkItemsSeparated implements WurmServerMod, PreInitable, Initable,
                         .instrument(new ExprEditor() {
                             @Override
                             public void edit(MethodCall m) throws CannotCompileException {
-                                if (m.getMethodName().equals("getNumItemsNotCoins"))
+                                if (m.getMethodName().equals("getNumItemsNotCoins")) {
                                     m.replace("$_=0;");
-                                else if (m.getMethodName().equals("getCarryCapacityFor"))
+                                    logger.info(String.format("Patched getNumItemsNotCoins in %s.%s at %d", m.where().getDeclaringClass().getName(), m.where().getName(), m.getLineNumber()));
+                                } else if (m.getMethodName().equals("getCarryCapacityFor")) {
                                     m.replace("if (targetInventory == null || targetInventory.getOwnerId() != -10L) $_=$proceed($$); else $_=100;");
-                                else if (m.getMethodName().equals("canCarry"))
+                                    logger.info(String.format("Patched getCarryCapacityFor in %s.%s at %d", m.where().getDeclaringClass().getName(), m.where().getName(), m.getLineNumber()));
+                                } else if (m.getMethodName().equals("canCarry")) {
                                     m.replace("if (targetInventory == null || targetInventory.getOwnerId() != -10L) $_=$proceed($$); else $_=true;");
+                                    logger.info(String.format("Patched canCarry in %s.%s at %d", m.where().getDeclaringClass().getName(), m.where().getName(), m.getLineNumber()));
+                                }
                             }
                         });
             }
