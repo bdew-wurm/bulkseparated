@@ -14,25 +14,27 @@ public class BulkItemsHooks {
     public static Item getTargetToAdd(Item bulkInventory, int templateId, int material, float quality, byte aux, int realTemplateId) {
         for (Item item : bulkInventory.getItems()) {
             if (item.getRealTemplateId() == templateId && item.getMaterial() == material && item.getAuxData() == aux && ((realTemplateId == -10 && item.getData1() == -1) || item.getData1() == realTemplateId)) {
-                if (BulkItemsSeperated.restrictToContainerQl == false || bulkInventory.getQualityLevel() <= quality) {
-                    float bulkQuality = item.getQualityLevel();
-                    if (quality > 99.995f) {
-                        if (bulkQuality > 99.995f) return item;
-                    } else if (bulkQuality < 90 && quality < 90) {
-                        double upperBoundary = Math.round((bulkQuality + 5) / 10.0) * 10.0;
-                        double lowerBoundary = Math.round((bulkQuality - 5) / 10.0) * 10.0;
-                        if (quality <= upperBoundary && quality >= lowerBoundary) {
-                            return item;
-                        }
-                    } else if (quality >= 90 && bulkQuality >= 90) {
-                        double upperBoundary = Math.ceil(bulkQuality);
-                        double lowerBoundary = Math.floor(bulkQuality);
-                        if (quality <= upperBoundary && quality >= lowerBoundary) {
-                            return item;
-                        }
+                float bulkQuality = item.getQualityLevel();
+                if (BulkItemsSeperated.restrictToContainerQl && quality > bulkInventory.getQualityLevel() {
+                    double lowerBoundary = Math.round(bulkInventory.getQualityLevel() - 5) / 10.0) * 10.0;
+                    if (bulkInventory.getQualityLevel() >= 90)
+                        lowerBoundary = Math.floor(bulkInventory.getQualityLevel());
+                    if (bulkQuality > lowerBoundary)
+                        return item;
+                } else if (quality > 99.995f) {
+                    if (bulkQuality > 99.995f) return item;
+                } else if (bulkQuality < 90 && quality < 90) {
+                    double upperBoundary = Math.round((bulkQuality + 5) / 10.0) * 10.0;
+                    double lowerBoundary = Math.round((bulkQuality - 5) / 10.0) * 10.0;
+                    if (quality <= upperBoundary && quality >= lowerBoundary) {
+                        return item;
                     }
-                } else {
-                    return item;
+                } else if (quality >= 90 && bulkQuality >= 90) {
+                    double upperBoundary = Math.ceil(bulkQuality);
+                    double lowerBoundary = Math.floor(bulkQuality);
+                    if (quality <= upperBoundary && quality >= lowerBoundary) {
+                        return item;
+                    }
                 }
             }
         }
