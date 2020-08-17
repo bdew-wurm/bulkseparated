@@ -27,6 +27,7 @@ public class BulkItemsSeparated implements WurmServerMod, PreInitable, Initable,
     public static boolean allowCrateSorting;
     public static boolean allowNonCrateSorting;
     public static boolean showSortingStatus;
+    public static boolean restrictToContainerQl;
 
     @Override
     public void configure(Properties properties) {
@@ -36,6 +37,7 @@ public class BulkItemsSeparated implements WurmServerMod, PreInitable, Initable,
         fasterTransfer = Boolean.parseBoolean(properties.getProperty("fasterTransfer", "true"));
         unlimitedRemove = Boolean.parseBoolean(properties.getProperty("unlimitedRemove", "true"));
         showSortingStatus = Boolean.parseBoolean(properties.getProperty("showSortingStatus", "true"));
+        restrictToContainerQl = Boolean.parseBoolean(properties.getProperty("restrictToContainerQl", "false"));
     }
 
     @Override
