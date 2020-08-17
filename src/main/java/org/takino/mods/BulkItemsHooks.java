@@ -15,8 +15,8 @@ public class BulkItemsHooks {
         for (Item item : bulkInventory.getItems()) {
             if (item.getRealTemplateId() == templateId && item.getMaterial() == material && item.getAuxData() == aux && ((realTemplateId == -10 && item.getData1() == -1) || item.getData1() == realTemplateId)) {
                 float bulkQuality = item.getQualityLevel();
-                if (BulkItemsSeperated.restrictToContainerQl && quality > bulkInventory.getQualityLevel() {
-                    double lowerBoundary = Math.round(bulkInventory.getQualityLevel() - 5) / 10.0) * 10.0;
+                if (BulkItemsSeparated.restrictToContainerQl && quality > bulkInventory.getQualityLevel()) {
+                    double lowerBoundary = Math.round((bulkInventory.getQualityLevel() - 5) / 10.0) * 10.0;
                     if (bulkInventory.getQualityLevel() >= 90)
                         lowerBoundary = Math.floor(bulkInventory.getQualityLevel());
                     if (bulkQuality > lowerBoundary)
